@@ -16,7 +16,7 @@
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="v8X-wv-0WA" userLabel="playerLayer">
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="v8X-wv-0WA" userLabel="playerLayer" customClass="PlayerView" customModule="VideoScrubber" customModuleProvider="target">
                                 <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                                 <color key="backgroundColor" systemColor="systemGrayColor"/>
                             </view>
@@ -30,9 +30,11 @@
                             <constraint firstAttribute="bottom" secondItem="v8X-wv-0WA" secondAttribute="bottom" id="zXt-rP-EUa"/>
                         </constraints>
                     </view>
-                    <navigationItem key="navigationItem" id="7vs-Sa-HUy">
-                        <barButtonItem key="leftBarButtonItem" style="plain" systemItem="play" id="kGY-YH-GWu"/>
-                    </navigationItem>
+                    <toolbarItems/>
+                    <navigationItem key="navigationItem" id="7vs-Sa-HUy"/>
+                    <connections>
+                        <outlet property="playerView" destination="v8X-wv-0WA" id="klJ-Py-cAP"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>
@@ -41,13 +43,17 @@
         <!--Navigation Controller-->
         <scene sceneID="JH1-yR-K49">
             <objects>
-                <navigationController automaticallyAdjustsScrollViewInsets="NO" id="wEc-55-gSL" sceneMemberID="viewController">
+                <navigationController automaticallyAdjustsScrollViewInsets="NO" toolbarHidden="NO" id="wEc-55-gSL" sceneMemberID="viewController">
                     <toolbarItems/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" id="OEx-kk-SR2">
                         <rect key="frame" x="0.0" y="44" width="414" height="44"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </navigationBar>
                     <nil name="viewControllers"/>
+                    <toolbar key="toolbar" opaque="NO" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" id="t7d-Jx-Kb3">
+                        <rect key="frame" x="0.0" y="813" width="414" height="49"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </toolbar>
                     <connections>
                         <segue destination="BYZ-38-t0r" kind="relationship" relationship="rootViewController" id="E0j-Ac-ykW"/>
                     </connections>

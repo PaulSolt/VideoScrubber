@@ -6,14 +6,218 @@
 //
 
 import UIKit
+import AVFoundation
+
+// Video player logic based on Apple's AVFoudnationSimplePlayer sample code
 
 class VideoViewController: UIViewController {
 
+    var player: AVPlayer = AVPlayer()
+    
+    var playPauseButton: UIButton!
+    @IBOutlet var playerView: PlayerView!
+    
+    let playButtonSymbol = "play.fill"
+    let pauseButtonSymbol = "pause.fill"
+    
+    private var playerTimeControlStatusObserver: NSKeyValueObservation?
+    private var playerCurrentItemStatusObserver: NSKeyValueObservation?
+    private var timeObserverToken: Any?
+    
+    lazy var timeFormatter: DateComponentsFormatter = {
+        let formatter = DateComponentsFormatter()
+        formatter.zeroFormattingBehavior = .pad
+        formatter.allowedUnits = [.minute, .second]
+        formatter.unitsStyle = .positional
+        return formatter
+    }()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        setUpToolBar()
+        disableUI()
         
+//        let url = Bundle.main.url(forResource: "bad-video", withExtension: "mp4")!
+        let url = Bundle.main.url(forResource: "BrewCoffeeVideo720", withExtension: "mp4")!
+        loadVideo(url: url)
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        player.pause()
+        
+        removePeriodicTimeObserver()
+        
+        super.viewWillDisappear(animated)
+    }
+    
+    private func removePeriodicTimeObserver() {
+        if let timeObserverToken = timeObserverToken {
+            player.removeTimeObserver(timeObserverToken)
+        }
+    }
+    
+    private func setUpToolBar() {
+        createPlayPauseButton()
+        
+        let playBarButton = UIBarButtonItem(customView: playPauseButton)
+        toolbarItems = [.flexibleSpace(), playBarButton, .flexibleSpace()]
+    }
+    
+    private func createPlayPauseButton() {
+        playPauseButton = UIButton(type: .system)
+        playPauseButton.setImage(UIImage(systemName: playButtonSymbol), for: .normal)
+        playPauseButton.addTarget(self, action: #selector(playPauseButtonPressed(_:)), for: .touchUpInside)
     }
 
-}
+    @IBAction func playPauseButtonPressed(_ sender: UIButton) {
+        switch player.timeControlStatus {
+        case .playing:
+            player.pause()
+        case .paused:
+            player.play()
+        default:
+            player.pause()
+        }
+    }
+    
+    func loadVideo(url: URL) {
+        let asset = AVURLAsset(url: url)
+        loadPropertyValues(forAsset: asset)
+    }
+    
+    // AVAsset may block the main thread until the asset is loaded as properties like isPlayable
+    // block until the asset is buffered. An asset may not be playable if it has protected content
+    func loadPropertyValues(forAsset asset: AVURLAsset) {
+        let assetKeysRequiredForPlayback = [ "playable", "hasProtectedContent" ]
+        
+        asset.loadValuesAsynchronously(forKeys: assetKeysRequiredForPlayback) {
+            
+            DispatchQueue.main.async {
+                if self.validateAssetValues(forKeys: assetKeysRequiredForPlayback, asset: asset) {
+                    // Prepare for playback
+                    self.setUpPlaybackObservers()
+                    
+                    self.playerView.player = self.player
+                    
+                    self.player.replaceCurrentItem(with: AVPlayerItem(asset: asset))
+                }
+            }
+        }
+    }
+    
+    func validateAssetValues(forKeys keys: [String], asset: AVAsset) -> Bool {
+        // Check keys for failures
+        for key in keys {
+            var error: NSError?
+            if asset.statusOfValue(forKey: key, error: &error) == .failed {
+                print("Error: The video failed to load the key: \(key)")
+                
+                let stringFormat = NSLocalizedString("The video failed to load the key \"%@\"", comment: "The asset cannot be loaded")
+                let message = String.localizedStringWithFormat(stringFormat, key)
+                handleErrorWithMessage(message, error: error)
+                return false
+            }
+        }
+        
+        if !asset.isPlayable || asset.hasProtectedContent {
+            print("Error: the video is not playable or has protected content")
+            let message = NSLocalizedString("The video is not playable or has protected content", comment: "You cannot play this video")
+            handleErrorWithMessage(message)
+            return false
+        }
+        return true
+    }
+    
+    func setUpPlaybackObservers() {
+        // Listen for if the media can be played (not protected and valid media)
+        playerTimeControlStatusObserver = player.observe(\AVPlayer.timeControlStatus,
+                                                         options: [.initial, .new]) { [weak self] _, _ in
+            guard let self = self else { return }
+            DispatchQueue.main.async {
+                self.updatePlayButton()
+            }
+        }
+        
+        // Listen for when the current item is ready to play
+        playerCurrentItemStatusObserver = player.observe(\AVPlayer.currentItem?.status,
+                                                         options: [.new, .initial]) { [weak self] (_, _) in
+            guard let self = self else { return }
+            DispatchQueue.main.async {
+                self.updateViewsForCurrentItemStatus()
+            }
+        }
+        
+        // Listen for changes in the playback
+        let interval = CMTime(value: 1, timescale: 30)
+        timeObserverToken = player.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] time in
+            guard let self = self else { return }
+            self.updateViews(time: time)
+        }
+    }
+        
+    private func updateViews(time: CMTime) {
+        let timeElapsed = Float(time.seconds)
+        
+        // TODO: Update the slider UI for time
+        print("time: \(createTimeString(time: timeElapsed))")
+    }
+    
+    private func createTimeString(time: Float) -> String {
+        // truncate for expected behavior 00:00.5 = 00:00
+        let components = DateComponents(second: Int(time))
+        return timeFormatter.string(for: components)!
+    }
+    
+    
+    private func updatePlayButton() {
+        var buttonImage: UIImage?
+        switch player.timeControlStatus {
+        case .playing:
+            buttonImage = UIImage(systemName: pauseButtonSymbol)
+        case .paused, .waitingToPlayAtSpecifiedRate:
+            buttonImage = UIImage(systemName: playButtonSymbol)
+        @unknown default:
+            buttonImage = UIImage(systemName: playButtonSymbol)
+        }
+        guard let image = buttonImage else { return }
+        self.playPauseButton.setImage(image, for: .normal)
+    }
 
+    private func updateViewsForCurrentItemStatus() {
+        guard let currentItem = player.currentItem else {
+            disableUI()
+            return
+        }
+        
+        switch currentItem.status {
+        case .readyToPlay:
+            enableUI()
+        case .failed:
+            disableUI()
+            handleErrorWithMessage(currentItem.error?.localizedDescription ?? "", error: currentItem.error)
+        default:
+            disableUI()
+        }
+    }
+    
+    func disableUI() {
+        playPauseButton.isEnabled = false
+    }
+    
+    func enableUI() {
+        playPauseButton.isEnabled = true
+    }
+    
+    func handleErrorWithMessage(_ message: String, error: Error? = nil) {
+        if let error = error {
+            print("Error: \(message), error: \(error)")
+        }
+        let alertTitle = NSLocalizedString("Video Error", comment: "Alert title for video errors")
+        let alert = UIAlertController(title: alertTitle, message: message, preferredStyle: .alert)
+        let actionTitle = NSLocalizedString("OK", comment: "OK on video error alert")
+        let alertAction = UIAlertAction(title: actionTitle, style: .default)
+        alert.addAction(alertAction)
+        present(alert, animated: true)
+    }
+}
