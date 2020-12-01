@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		BD0EEDD325759A7F00D3A0BE /* bad-video.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = BD0EEDD225759A7F00D3A0BE /* bad-video.mp4 */; };
+		BD0EEDD62575B28C00D3A0BE /* VideoScrubber.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD0EEDD52575B28C00D3A0BE /* VideoScrubber.swift */; };
+		BD0EEDDB2575EB4400D3A0BE /* VideoFrameCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD0EEDDA2575EB4400D3A0BE /* VideoFrameCell.swift */; };
 		BDC81F97257412D8009D1830 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDC81F96257412D8009D1830 /* AppDelegate.swift */; };
 		BDC81F99257412D8009D1830 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDC81F98257412D8009D1830 /* SceneDelegate.swift */; };
 		BDC81F9B257412D8009D1830 /* VideoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDC81F9A257412D8009D1830 /* VideoViewController.swift */; };
@@ -20,6 +22,8 @@
 
 /* Begin PBXFileReference section */
 		BD0EEDD225759A7F00D3A0BE /* bad-video.mp4 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "bad-video.mp4"; sourceTree = "<group>"; };
+		BD0EEDD52575B28C00D3A0BE /* VideoScrubber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoScrubber.swift; sourceTree = "<group>"; };
+		BD0EEDDA2575EB4400D3A0BE /* VideoFrameCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoFrameCell.swift; sourceTree = "<group>"; };
 		BDC81F93257412D8009D1830 /* VideoScrubber.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VideoScrubber.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BDC81F96257412D8009D1830 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		BDC81F98257412D8009D1830 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -43,6 +47,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		BD0EEDDD2575EB7A00D3A0BE /* VideoScrubber */ = {
+			isa = PBXGroup;
+			children = (
+				BD0EEDD52575B28C00D3A0BE /* VideoScrubber.swift */,
+				BD0EEDDA2575EB4400D3A0BE /* VideoFrameCell.swift */,
+			);
+			path = VideoScrubber;
+			sourceTree = "<group>";
+		};
 		BDC81F8A257412D8009D1830 = {
 			isa = PBXGroup;
 			children = (
@@ -66,6 +79,7 @@
 				BDC81F98257412D8009D1830 /* SceneDelegate.swift */,
 				BDC81F9A257412D8009D1830 /* VideoViewController.swift */,
 				BDC81FAB2574133C009D1830 /* PlayerView.swift */,
+				BD0EEDDD2575EB7A00D3A0BE /* VideoScrubber */,
 				BDC81F9C257412D8009D1830 /* Main.storyboard */,
 				BDC81F9F257412DA009D1830 /* Assets.xcassets */,
 				BDC81FA1257412DA009D1830 /* LaunchScreen.storyboard */,
@@ -149,9 +163,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				BDC81F9B257412D8009D1830 /* VideoViewController.swift in Sources */,
+				BD0EEDDB2575EB4400D3A0BE /* VideoFrameCell.swift in Sources */,
 				BDC81F97257412D8009D1830 /* AppDelegate.swift in Sources */,
 				BDC81FAC2574133C009D1830 /* PlayerView.swift in Sources */,
 				BDC81F99257412D8009D1830 /* SceneDelegate.swift in Sources */,
+				BD0EEDD62575B28C00D3A0BE /* VideoScrubber.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -301,6 +317,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = LCRLD36TZ6;
 				INFOPLIST_FILE = VideoScrubber/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -320,6 +337,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = LCRLD36TZ6;
 				INFOPLIST_FILE = VideoScrubber/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

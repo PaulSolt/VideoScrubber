@@ -14,9 +14,6 @@ class VideoViewController: UIViewController {
 
     var player: AVPlayer = AVPlayer()
     
-    var playPauseButton: UIButton!
-    @IBOutlet var playerView: PlayerView!
-    
     let playButtonSymbol = "play.fill"
     let pauseButtonSymbol = "pause.fill"
     
@@ -32,10 +29,27 @@ class VideoViewController: UIViewController {
         return formatter
     }()
     
+    lazy var playPauseButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: playButtonSymbol), for: .normal)
+        button.addTarget(self, action: #selector(playPauseButtonPressed(_:)), for: .touchUpInside)
+        return button
+    }()
+    
+    @IBOutlet var playerView: PlayerView!
+    
+    lazy var videoScrubber: VideoScrubber = {
+        let videoScrubber = VideoScrubber()
+        videoScrubber.translatesAutoresizingMaskIntoConstraints = false
+        videoScrubber.backgroundColor = .yellow
+        return videoScrubber
+    }()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        setUpToolBar()
+        configureToolBar()
+        configureVideoScrubber()
         disableUI()
         
 //        let url = Bundle.main.url(forResource: "bad-video", withExtension: "mp4")!
@@ -51,24 +65,24 @@ class VideoViewController: UIViewController {
         super.viewWillDisappear(animated)
     }
     
-    private func removePeriodicTimeObserver() {
-        if let timeObserverToken = timeObserverToken {
-            player.removeTimeObserver(timeObserverToken)
-        }
-    }
-    
-    private func setUpToolBar() {
-        createPlayPauseButton()
-        
+    private func configureToolBar() {
         let playBarButton = UIBarButtonItem(customView: playPauseButton)
         toolbarItems = [.flexibleSpace(), playBarButton, .flexibleSpace()]
     }
     
-    private func createPlayPauseButton() {
-        playPauseButton = UIButton(type: .system)
-        playPauseButton.setImage(UIImage(systemName: playButtonSymbol), for: .normal)
-        playPauseButton.addTarget(self, action: #selector(playPauseButtonPressed(_:)), for: .touchUpInside)
+    private func configureVideoScrubber() {
+        view.addSubview(videoScrubber)
+        
+        NSLayoutConstraint.activate([
+            view.leadingAnchor.constraint(equalTo: videoScrubber.leadingAnchor),
+            view.trailingAnchor.constraint(equalTo: videoScrubber.trailingAnchor),
+            view.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: videoScrubber.bottomAnchor),
+        ])
     }
+    
+    
+    
+
 
     @IBAction func playPauseButtonPressed(_ sender: UIButton) {
         switch player.timeControlStatus {
@@ -101,6 +115,8 @@ class VideoViewController: UIViewController {
                     self.playerView.player = self.player
                     
                     self.player.replaceCurrentItem(with: AVPlayerItem(asset: asset))
+                    
+                    self.videoScrubber.asset = asset
                 }
             }
         }
@@ -153,6 +169,12 @@ class VideoViewController: UIViewController {
         timeObserverToken = player.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] time in
             guard let self = self else { return }
             self.updateViews(time: time)
+        }
+    }
+    
+    private func removePeriodicTimeObserver() {
+        if let timeObserverToken = timeObserverToken {
+            player.removeTimeObserver(timeObserverToken)
         }
     }
         
