@@ -10,6 +10,7 @@
 		BD0EEDD325759A7F00D3A0BE /* bad-video.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = BD0EEDD225759A7F00D3A0BE /* bad-video.mp4 */; };
 		BD0EEDD62575B28C00D3A0BE /* VideoScrubber.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD0EEDD52575B28C00D3A0BE /* VideoScrubber.swift */; };
 		BD0EEDDB2575EB4400D3A0BE /* VideoFrameCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD0EEDDA2575EB4400D3A0BE /* VideoFrameCell.swift */; };
+		BD17BCB6257838CA00B40B9C /* tomato-polinating.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = BD17BCB5257838CA00B40B9C /* tomato-polinating.mp4 */; };
 		BDC81F97257412D8009D1830 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDC81F96257412D8009D1830 /* AppDelegate.swift */; };
 		BDC81F99257412D8009D1830 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDC81F98257412D8009D1830 /* SceneDelegate.swift */; };
 		BDC81F9B257412D8009D1830 /* VideoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDC81F9A257412D8009D1830 /* VideoViewController.swift */; };
@@ -24,6 +25,7 @@
 		BD0EEDD225759A7F00D3A0BE /* bad-video.mp4 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "bad-video.mp4"; sourceTree = "<group>"; };
 		BD0EEDD52575B28C00D3A0BE /* VideoScrubber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoScrubber.swift; sourceTree = "<group>"; };
 		BD0EEDDA2575EB4400D3A0BE /* VideoFrameCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoFrameCell.swift; sourceTree = "<group>"; };
+		BD17BCB5257838CA00B40B9C /* tomato-polinating.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "tomato-polinating.mp4"; sourceTree = "<group>"; };
 		BDC81F93257412D8009D1830 /* VideoScrubber.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VideoScrubber.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BDC81F96257412D8009D1830 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		BDC81F98257412D8009D1830 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -85,6 +87,7 @@
 				BDC81FA1257412DA009D1830 /* LaunchScreen.storyboard */,
 				BDC81FA4257412DA009D1830 /* Info.plist */,
 				BD0EEDD225759A7F00D3A0BE /* bad-video.mp4 */,
+				BD17BCB5257838CA00B40B9C /* tomato-polinating.mp4 */,
 				BDC81FB7257420FD009D1830 /* BrewCoffeeVideo720.mp4 */,
 			);
 			path = VideoScrubber;
@@ -150,6 +153,7 @@
 				BDC81FA3257412DA009D1830 /* LaunchScreen.storyboard in Resources */,
 				BDC81FB8257420FD009D1830 /* BrewCoffeeVideo720.mp4 in Resources */,
 				BDC81FA0257412DA009D1830 /* Assets.xcassets in Resources */,
+				BD17BCB6257838CA00B40B9C /* tomato-polinating.mp4 in Resources */,
 				BD0EEDD325759A7F00D3A0BE /* bad-video.mp4 in Resources */,
 				BDC81F9E257412D8009D1830 /* Main.storyboard in Resources */,
 			);

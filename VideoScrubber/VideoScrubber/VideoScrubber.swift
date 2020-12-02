@@ -245,7 +245,6 @@ extension VideoScrubber: UICollectionViewDelegate {
             updateTimeLabel(time: _value)
             sendActions(for: .valueChanged)
         }
-        print("scrollViewDidScroll: \(calculateValueFromScrollViewOffset(scrollView: scrollView))")
     }
     
     private func calculateValueFromScrollViewOffset(scrollView: UIScrollView) -> Double {
@@ -261,8 +260,6 @@ extension VideoScrubber: UICollectionViewDelegate {
         let duration = asset?.duration.seconds ?? 0.0
         let normalizedXOffset = newValue / duration
         let xOffset = Double(min(max(normalizedXOffset * width, 0), width)) - Double(collectionView.contentInset.left)
-        
-
         collectionView.contentOffset = CGPoint(x: xOffset, y: 0)
     }
     
@@ -278,8 +275,6 @@ extension VideoScrubber: UICollectionViewDelegate {
 
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
         sendActions(for: .touchDragExit)
-        print("scrollViewDidEndDecelerating: \(calculateValueFromScrollViewOffset(scrollView: scrollView))")
-        
     }
 }
 

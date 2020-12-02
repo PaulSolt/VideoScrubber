@@ -99,7 +99,6 @@ class VideoViewController: UIViewController {
         }
     }
     
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -107,7 +106,9 @@ class VideoViewController: UIViewController {
         configureVideoScrubber()
         disableUI()
         
-        let url = Bundle.main.url(forResource: "BrewCoffeeVideo720", withExtension: "mp4")!
+//        let url = Bundle.main.url(forResource: "BrewCoffeeVideo720", withExtension: "mp4")! // portrait
+        let url = Bundle.main.url(forResource: "tomato-polinating", withExtension: "mp4")! // vertical
+        
         loadVideo(url: url)
     }
     
@@ -145,30 +146,16 @@ class VideoViewController: UIViewController {
         case .playing:
             player.pause()
         case .paused:
-            
-            /*
-            print("player.currentItem?.currentTime() \(player.currentItem?.currentTime())")
-//            print("player.currentItem?.currentTime() \(player.currentItem?.currentTime().convertScale(player.currentItem?.duration ?? , method: .default))")
-            print("player.currentItem?.duration \(player.currentItem?.duration)")
-
-//            if player.currentItem?.currentTime() == player.currentItem?.duration {
-            
-            let currentTime: CMTime = player.currentItem?.currentTime() ?? .zero
-            let duration: CMTime = player.currentItem?.duration ?? .zero
-            
-            print("currentTime rounded: \(currentTime.hasBeenRounded)")
-            print("duration rounded: \(duration.hasBeenRounded)")
-//            currentTime.
-            let diff = CMTimeAbsoluteValue(currentTime - duration)
-            let nearZero = CMTime(value: 1, timescale: 1000)
-            print("diff: \(diff) nearZero: \(nearZero)")
-            if diff < nearZero {
-                player.seek(to: .zero)
-            }*/
-            
+            checkIfFinishedAndRewind()
             player.play()
         default:
             player.pause()
+        }
+    }
+    
+    private func checkIfFinishedAndRewind() {
+        if player.currentItem?.currentTime() == player.currentItem?.duration {
+            player.seek(to: .zero)
         }
     }
 
@@ -260,11 +247,7 @@ class VideoViewController: UIViewController {
         if player.status == .readyToPlay && player.timeControlStatus == .playing {
             videoScrubber.value = timeElapsed
         }
-        // TODO: Update the slider UI for time
-//        print("time: \(createTimeString(time: timeElapsed))")
     }
-    
-    
     
     private func updatePlayButton() {
         var buttonImage: UIImage?
@@ -272,11 +255,7 @@ class VideoViewController: UIViewController {
         case .playing:
             buttonImage = UIImage(systemName: pauseButtonSymbol)
         case .paused, .waitingToPlayAtSpecifiedRate:
-//            if wasPlayingBeforeSeek {
-//                buttonImage = UIImage(systemName: pauseButtonSymbol)
-//            } else {
-                buttonImage = UIImage(systemName: playButtonSymbol)
-//            }
+            buttonImage = UIImage(systemName: playButtonSymbol)
         @unknown default:
             buttonImage = UIImage(systemName: playButtonSymbol)
         }
