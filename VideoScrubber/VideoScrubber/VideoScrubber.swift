@@ -23,16 +23,15 @@ class VideoScrubber: UIControl {
         return formatter
     }()
     
-    
-    private func createTimeString(time: Float) -> String {
-        // truncate for expected behavior 00:00.5 = 00:00
-        let components = DateComponents(second: Int(time))
-        return timeFormatter.string(for: components)!
-    }
-    
-    var value: Double = 0 {
-        didSet {
-            scrollTo(newValue: value)
+    var _value: Double = 0
+    var value: Double {
+        set {
+            _value = newValue
+            scrollTo(newValue: _value)
+            updateTimeLabel(time: _value)
+        }
+        get {
+            _value
         }
     }
     
@@ -224,30 +223,36 @@ class VideoScrubber: UIControl {
             
         ])
     }
+    
+    private func updateTimeLabel(time: Double) {
+        timeLabel.text = createTimeString(time: time)
+    }
+    
+    private func createTimeString(time: Double) -> String {
+        // truncate for expected behavior 00:00.5 => 00:00
+        let components = DateComponents(second: Int(time))
+        return timeFormatter.string(for: components)!
+    }
 }
 
 extension VideoScrubber: UICollectionViewDelegate {
     
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        // layoutSubviews can cause scrollViewDidScroll to be called, prevent invalid logic by
+        // making sure the user actually scrolled the content
         if scrollView.isTracking || scrollView.isDragging || scrollView.isDecelerating {
-            print("scrollViewDidScroll() - not tracking, dragging, or decelerating")
-
-            value = calculateValueFromScrollViewOffset(scrollView: scrollView)
+            _value = calculateValueFromScrollViewOffset(scrollView: scrollView)
+            updateTimeLabel(time: _value)
             sendActions(for: .valueChanged)
-        } else {
-            print("scrollViewDidScroll()")
         }
+        print("scrollViewDidScroll: \(calculateValueFromScrollViewOffset(scrollView: scrollView))")
     }
     
-    func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
-        print("scrollViewDidEndScrollingAnimation()")
-    }
-
     private func calculateValueFromScrollViewOffset(scrollView: UIScrollView) -> Double {
         let xOffset: CGFloat = scrollView.contentOffset.x + scrollView.contentInset.left
         let width = scrollView.contentSize.width
         let duration = asset?.duration.seconds ?? 0.0
-        let normalizedXOffset = Double(min(max(xOffset / width, 0), width))
+        let normalizedXOffset = Double(min(max(xOffset / width, 0), 1))
         return normalizedXOffset * duration
     }
     
@@ -259,34 +264,28 @@ extension VideoScrubber: UICollectionViewDelegate {
         
 
         collectionView.contentOffset = CGPoint(x: xOffset, y: 0)
-
     }
     
     func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
-        print("scrollViewWillBeginDragging()")
-
         sendActions(for: .touchDragEnter)
     }
-
-    func scrollViewWillEndDragging(_ scrollView: UIScrollView, withVelocity velocity: CGPoint, targetContentOffset: UnsafeMutablePointer<CGPoint>) {
-        
-        print("scrollViewWillEndDragging().velocity: \(velocity)")
-    }
+    
     func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
-        print("scrollViewDidEndDragging().willDecelerate: \(decelerate)")
         if !decelerate {
             sendActions(for: .touchDragExit)
         }
     }
+
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
-        print("scrollViewDidEndDecelerating")
         sendActions(for: .touchDragExit)
+        print("scrollViewDidEndDecelerating: \(calculateValueFromScrollViewOffset(scrollView: scrollView))")
+        
     }
 }
 
 extension VideoScrubber: UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        frames.count // 5 // frames.count
+        frames.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {

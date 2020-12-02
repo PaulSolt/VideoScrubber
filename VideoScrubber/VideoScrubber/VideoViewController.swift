@@ -145,6 +145,27 @@ class VideoViewController: UIViewController {
         case .playing:
             player.pause()
         case .paused:
+            
+            /*
+            print("player.currentItem?.currentTime() \(player.currentItem?.currentTime())")
+//            print("player.currentItem?.currentTime() \(player.currentItem?.currentTime().convertScale(player.currentItem?.duration ?? , method: .default))")
+            print("player.currentItem?.duration \(player.currentItem?.duration)")
+
+//            if player.currentItem?.currentTime() == player.currentItem?.duration {
+            
+            let currentTime: CMTime = player.currentItem?.currentTime() ?? .zero
+            let duration: CMTime = player.currentItem?.duration ?? .zero
+            
+            print("currentTime rounded: \(currentTime.hasBeenRounded)")
+            print("duration rounded: \(duration.hasBeenRounded)")
+//            currentTime.
+            let diff = CMTimeAbsoluteValue(currentTime - duration)
+            let nearZero = CMTime(value: 1, timescale: 1000)
+            print("diff: \(diff) nearZero: \(nearZero)")
+            if diff < nearZero {
+                player.seek(to: .zero)
+            }*/
+            
             player.play()
         default:
             player.pause()
