@@ -15,7 +15,26 @@ struct Frame {
 
 class VideoScrubber: UIControl {
     
-    var value: Double = 0
+    lazy var timeFormatter: DateComponentsFormatter = {
+        let formatter = DateComponentsFormatter()
+        formatter.zeroFormattingBehavior = .pad
+        formatter.allowedUnits = [.minute, .second]
+        formatter.unitsStyle = .positional
+        return formatter
+    }()
+    
+    
+    private func createTimeString(time: Float) -> String {
+        // truncate for expected behavior 00:00.5 = 00:00
+        let components = DateComponents(second: Int(time))
+        return timeFormatter.string(for: components)!
+    }
+    
+    var value: Double = 0 {
+        didSet {
+            scrollTo(newValue: value)
+        }
+    }
     
     var asset: AVAsset? {
         didSet {
@@ -205,23 +224,64 @@ class VideoScrubber: UIControl {
             
         ])
     }
-    
 }
 
 extension VideoScrubber: UICollectionViewDelegate {
+    
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        let xOffset: CGFloat = scrollView.contentOffset.x + scrollView.contentInset.left
-        // TODO: use the offset to send change events back to target/action
-        let width = scrollView.contentSize.width
-        
-        // Create a value between [0, 1]
-        
-        value = Double(min(max(xOffset / width, 0), width)) * (asset?.duration.seconds ?? 1.0)
-        // post value changed
-        sendActions(for: .valueChanged) 
+        if scrollView.isTracking || scrollView.isDragging || scrollView.isDecelerating {
+            print("scrollViewDidScroll() - not tracking, dragging, or decelerating")
 
+            value = calculateValueFromScrollViewOffset(scrollView: scrollView)
+            sendActions(for: .valueChanged)
+        } else {
+            print("scrollViewDidScroll()")
+        }
+    }
+    
+    func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
+        print("scrollViewDidEndScrollingAnimation()")
     }
 
+    private func calculateValueFromScrollViewOffset(scrollView: UIScrollView) -> Double {
+        let xOffset: CGFloat = scrollView.contentOffset.x + scrollView.contentInset.left
+        let width = scrollView.contentSize.width
+        let duration = asset?.duration.seconds ?? 0.0
+        let normalizedXOffset = Double(min(max(xOffset / width, 0), width))
+        return normalizedXOffset * duration
+    }
+    
+    private func scrollTo(newValue: Double) {
+        let width = Double(collectionView.contentSize.width)
+        let duration = asset?.duration.seconds ?? 0.0
+        let normalizedXOffset = newValue / duration
+        let xOffset = Double(min(max(normalizedXOffset * width, 0), width)) - Double(collectionView.contentInset.left)
+        
+
+        collectionView.contentOffset = CGPoint(x: xOffset, y: 0)
+
+    }
+    
+    func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
+        print("scrollViewWillBeginDragging()")
+
+        sendActions(for: .touchDragEnter)
+    }
+
+    func scrollViewWillEndDragging(_ scrollView: UIScrollView, withVelocity velocity: CGPoint, targetContentOffset: UnsafeMutablePointer<CGPoint>) {
+        
+        print("scrollViewWillEndDragging().velocity: \(velocity)")
+    }
+    func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
+        print("scrollViewDidEndDragging().willDecelerate: \(decelerate)")
+        if !decelerate {
+            sendActions(for: .touchDragExit)
+        }
+    }
+    func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+        print("scrollViewDidEndDecelerating")
+        sendActions(for: .touchDragExit)
+    }
 }
 
 extension VideoScrubber: UICollectionViewDataSource {
@@ -243,6 +303,4 @@ extension VideoScrubber: UICollectionViewDataSource {
         }
         return cell
     }
-    
-    
 }

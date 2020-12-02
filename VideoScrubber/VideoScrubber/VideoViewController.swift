@@ -21,17 +21,10 @@ class VideoViewController: UIViewController {
     private var playerCurrentItemStatusObserver: NSKeyValueObservation?
     private var timeObserverToken: Any?
     
-    lazy var timeFormatter: DateComponentsFormatter = {
-        let formatter = DateComponentsFormatter()
-        formatter.zeroFormattingBehavior = .pad
-        formatter.allowedUnits = [.minute, .second]
-        formatter.unitsStyle = .positional
-        return formatter
-    }()
-    
     lazy var playPauseButton: UIButton = {
         let button = UIButton(type: .system)
         button.setImage(UIImage(systemName: playButtonSymbol), for: .normal)
+        button.backgroundColor = .yellow
         button.addTarget(self, action: #selector(playPauseButtonPressed(_:)), for: .touchUpInside)
         return button
     }()
@@ -43,6 +36,9 @@ class VideoViewController: UIViewController {
         videoScrubber.translatesAutoresizingMaskIntoConstraints = false
         videoScrubber.backgroundColor = .yellow
         videoScrubber.addTarget(self, action: #selector(didScrollVideoScrubber(sender:)), for: .valueChanged)
+        videoScrubber.addTarget(self, action: #selector(didStartDragging(sender:)), for: .touchDragEnter)
+        videoScrubber.addTarget(self, action: #selector(didEndDragging(sender:)), for: .touchDragExit)
+
         return videoScrubber
     }()
     
@@ -51,17 +47,32 @@ class VideoViewController: UIViewController {
         stopPlayingAndSeekSmoothlyToTime(time: time)
     }
     
+    @objc func didStartDragging(sender: VideoScrubber) {
+        if player.timeControlStatus == .playing || player.timeControlStatus == .waitingToPlayAtSpecifiedRate {
+            wasPlayingBeforeSeek = true
+        }
+    }
+    
+    @objc func didEndDragging(sender: VideoScrubber) {
+        if wasPlayingBeforeSeek {
+            self.wasPlayingBeforeSeek = false
+            self.resumePlaybackAfterSeek = false
+            self.player.play()
+        }
+    }
+    
     // Smooth seeking based on Apple Technical Note: https://developer.apple.com/library/archive/qa/qa1820/_index.html#//apple_ref/doc/uid/DTS40016828
     // It will ignore seek requests if the player is still busy seeking
-    private var seekTime = CMTime.zero
+    private var requestedSeekTime = CMTime.zero
     private var isSeekInProgress = false
+    private var wasPlayingBeforeSeek = false
+    private var resumePlaybackAfterSeek = false
     
     func stopPlayingAndSeekSmoothlyToTime(time: CMTime) {
-        player.pause() // resume playback if it was playing when completed
+        player.pause() // TODO: resume playback if it was playing when completed
         
-        // Try to seek if there is not a seek in progress
-        if time != seekTime {
-            seekTime = time
+        if time != requestedSeekTime {
+            requestedSeekTime = time
             if !isSeekInProgress {
                 tryToSeekToSeekTime()
             }
@@ -77,9 +88,9 @@ class VideoViewController: UIViewController {
     
     private func actuallySeekToSeekTime() {
         isSeekInProgress = true
-        let seekTimeInProgress = seekTime
-        player.seek(to: seekTime, toleranceBefore: .zero, toleranceAfter: .zero) { (isFinished) in
-            if seekTimeInProgress == self.seekTime {
+        let seekTimeInProgress = requestedSeekTime
+        player.seek(to: requestedSeekTime, toleranceBefore: .zero, toleranceAfter: .zero) { (isFinished) in
+            if seekTimeInProgress == self.requestedSeekTime {
                 self.isSeekInProgress = false
             } else {
                 // If another seek request occured during our seek, seek to the most recent seek time
@@ -111,6 +122,12 @@ class VideoViewController: UIViewController {
     private func configureToolBar() {
         let playBarButton = UIBarButtonItem(customView: playPauseButton)
         toolbarItems = [.flexibleSpace(), playBarButton, .flexibleSpace()]
+        
+        // Increase the tap target for a custom bar view button
+        NSLayoutConstraint.activate([
+            playPauseButton.widthAnchor.constraint(equalToConstant: 40),
+            playPauseButton.heightAnchor.constraint(equalToConstant: 40),
+        ])
     }
     
     private func configureVideoScrubber() {
@@ -217,17 +234,15 @@ class VideoViewController: UIViewController {
     }
         
     private func updateViews(time: CMTime) {
-        let timeElapsed = Float(time.seconds)
+        let timeElapsed = time.seconds
         
+        if player.status == .readyToPlay && player.timeControlStatus == .playing {
+            videoScrubber.value = timeElapsed
+        }
         // TODO: Update the slider UI for time
 //        print("time: \(createTimeString(time: timeElapsed))")
     }
     
-    private func createTimeString(time: Float) -> String {
-        // truncate for expected behavior 00:00.5 = 00:00
-        let components = DateComponents(second: Int(time))
-        return timeFormatter.string(for: components)!
-    }
     
     
     private func updatePlayButton() {
@@ -236,7 +251,11 @@ class VideoViewController: UIViewController {
         case .playing:
             buttonImage = UIImage(systemName: pauseButtonSymbol)
         case .paused, .waitingToPlayAtSpecifiedRate:
-            buttonImage = UIImage(systemName: playButtonSymbol)
+//            if wasPlayingBeforeSeek {
+//                buttonImage = UIImage(systemName: pauseButtonSymbol)
+//            } else {
+                buttonImage = UIImage(systemName: playButtonSymbol)
+//            }
         @unknown default:
             buttonImage = UIImage(systemName: playButtonSymbol)
         }

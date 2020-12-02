@@ -50,6 +50,7 @@
 		BD0EEDDD2575EB7A00D3A0BE /* VideoScrubber */ = {
 			isa = PBXGroup;
 			children = (
+				BDC81F9A257412D8009D1830 /* VideoViewController.swift */,
 				BD0EEDD52575B28C00D3A0BE /* VideoScrubber.swift */,
 				BD0EEDDA2575EB4400D3A0BE /* VideoFrameCell.swift */,
 			);
@@ -77,9 +78,8 @@
 			children = (
 				BDC81F96257412D8009D1830 /* AppDelegate.swift */,
 				BDC81F98257412D8009D1830 /* SceneDelegate.swift */,
-				BDC81F9A257412D8009D1830 /* VideoViewController.swift */,
-				BDC81FAB2574133C009D1830 /* PlayerView.swift */,
 				BD0EEDDD2575EB7A00D3A0BE /* VideoScrubber */,
+				BDC81FAB2574133C009D1830 /* PlayerView.swift */,
 				BDC81F9C257412D8009D1830 /* Main.storyboard */,
 				BDC81F9F257412DA009D1830 /* Assets.xcassets */,
 				BDC81FA1257412DA009D1830 /* LaunchScreen.storyboard */,
