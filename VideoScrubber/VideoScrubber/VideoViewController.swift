@@ -8,37 +8,46 @@
 import UIKit
 import AVFoundation
 
-// Video player logic based on Apple's AVFoudnationSimplePlayer sample code
-
+/// Video player logic based on Apple's AVFoudnationSimplePlayer sample code
+/// Loads a video that is passed in via dependency injection via a URL and creates
+/// the video scrubbing interface
 class VideoViewController: UIViewController {
 
-    var player: AVPlayer = AVPlayer()
-    
+    static let storyboardName = "Main"
+    static let identifier = "VideoViewController"
+
     let playButtonSymbol = "play.fill"
     let pauseButtonSymbol = "pause.fill"
+    let buttonWidth: CGFloat = 40
+
+    // The video URL to open
+    var url: URL
+    
+    var player: AVPlayer = AVPlayer()
     
     private var playerTimeControlStatusObserver: NSKeyValueObservation?
     private var playerCurrentItemStatusObserver: NSKeyValueObservation?
     private var timeObserverToken: Any?
     
+    private var requestedSeekTime = CMTime.zero
+    private var isSeekInProgress = false
+    
+    // MARK: - Views
+    @IBOutlet var playerView: PlayerView!
+
     lazy var playPauseButton: UIButton = {
         let button = UIButton(type: .system)
         button.setImage(UIImage(systemName: playButtonSymbol), for: .normal)
-        button.backgroundColor = .yellow
         button.addTarget(self, action: #selector(playPauseButtonPressed(_:)), for: .touchUpInside)
+        button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
-    
-    @IBOutlet var playerView: PlayerView!
     
     lazy var videoScrubber: VideoScrubber = {
         let videoScrubber = VideoScrubber()
         videoScrubber.translatesAutoresizingMaskIntoConstraints = false
         videoScrubber.backgroundColor = .yellow
         videoScrubber.addTarget(self, action: #selector(didScrollVideoScrubber(sender:)), for: .valueChanged)
-        videoScrubber.addTarget(self, action: #selector(didStartDragging(sender:)), for: .touchDragEnter)
-        videoScrubber.addTarget(self, action: #selector(didEndDragging(sender:)), for: .touchDragExit)
-
         return videoScrubber
     }()
     
@@ -47,27 +56,63 @@ class VideoViewController: UIViewController {
         stopPlayingAndSeekSmoothlyToTime(time: time)
     }
     
-    @objc func didStartDragging(sender: VideoScrubber) {
-        if player.timeControlStatus == .playing || player.timeControlStatus == .waitingToPlayAtSpecifiedRate {
-            wasPlayingBeforeSeek = true
+    /// Use the create method to create a new VideoViewController programmatically
+    init?(coder: NSCoder, url: URL) {
+        self.url = url
+        super.init(coder: coder)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("Create view controller with a URL")
+    }
+        
+    static func create(url: URL) -> VideoViewController {
+        let storyboard = UIStoryboard(name: storyboardName, bundle: nil)
+        return storyboard.instantiateViewController(identifier: identifier) { (coder) -> VideoViewController? in
+            return VideoViewController(coder: coder, url: url)
         }
     }
     
-    @objc func didEndDragging(sender: VideoScrubber) {
-        if wasPlayingBeforeSeek {
-            self.wasPlayingBeforeSeek = false
-            self.resumePlaybackAfterSeek = false
-            self.player.play()
-        }
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        configureToolBar()
+        configureVideoScrubber()
+        disableUI()
+                
+        loadVideo(url: url)
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        player.pause()
+        removePeriodicTimeObserver()
+        
+        super.viewWillDisappear(animated)
+    }
+    
+    private func configureToolBar() {
+        let playBarButton = UIBarButtonItem(customView: playPauseButton)
+        toolbarItems = [.flexibleSpace(), playBarButton, .flexibleSpace()]
+        
+        // Increase the tap target for a custom bar view button
+        NSLayoutConstraint.activate([
+            playPauseButton.widthAnchor.constraint(equalToConstant: buttonWidth),
+            playPauseButton.heightAnchor.constraint(equalToConstant: buttonWidth),
+        ])
+    }
+    
+    private func configureVideoScrubber() {
+        view.addSubview(videoScrubber)
+        
+        NSLayoutConstraint.activate([
+            view.leadingAnchor.constraint(equalTo: videoScrubber.leadingAnchor),
+            view.trailingAnchor.constraint(equalTo: videoScrubber.trailingAnchor),
+            view.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: videoScrubber.bottomAnchor),
+        ])
     }
     
     // Smooth seeking based on Apple Technical Note: https://developer.apple.com/library/archive/qa/qa1820/_index.html#//apple_ref/doc/uid/DTS40016828
     // It will ignore seek requests if the player is still busy seeking
-    private var requestedSeekTime = CMTime.zero
-    private var isSeekInProgress = false
-    private var wasPlayingBeforeSeek = false
-    private var resumePlaybackAfterSeek = false
-    
     func stopPlayingAndSeekSmoothlyToTime(time: CMTime) {
         player.pause() // TODO: resume playback if it was playing when completed
         
@@ -97,48 +142,6 @@ class VideoViewController: UIViewController {
                 self.tryToSeekToSeekTime()
             }
         }
-    }
-    
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        
-        configureToolBar()
-        configureVideoScrubber()
-        disableUI()
-        
-//        let url = Bundle.main.url(forResource: "BrewCoffeeVideo720", withExtension: "mp4")! // portrait
-        let url = Bundle.main.url(forResource: "tomato-polinating", withExtension: "mp4")! // vertical
-        
-        loadVideo(url: url)
-    }
-    
-    override func viewWillDisappear(_ animated: Bool) {
-        player.pause()
-        
-        removePeriodicTimeObserver()
-        
-        super.viewWillDisappear(animated)
-    }
-    
-    private func configureToolBar() {
-        let playBarButton = UIBarButtonItem(customView: playPauseButton)
-        toolbarItems = [.flexibleSpace(), playBarButton, .flexibleSpace()]
-        
-        // Increase the tap target for a custom bar view button
-        NSLayoutConstraint.activate([
-            playPauseButton.widthAnchor.constraint(equalToConstant: 40),
-            playPauseButton.heightAnchor.constraint(equalToConstant: 40),
-        ])
-    }
-    
-    private func configureVideoScrubber() {
-        view.addSubview(videoScrubber)
-        
-        NSLayoutConstraint.activate([
-            view.leadingAnchor.constraint(equalTo: videoScrubber.leadingAnchor),
-            view.trailingAnchor.constraint(equalTo: videoScrubber.trailingAnchor),
-            view.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: videoScrubber.bottomAnchor),
-        ])
     }
     
     @IBAction func playPauseButtonPressed(_ sender: UIButton) {
@@ -174,11 +177,8 @@ class VideoViewController: UIViewController {
                 if self.validateAssetValues(forKeys: assetKeysRequiredForPlayback, asset: asset) {
                     // Prepare for playback
                     self.setUpPlaybackObservers()
-                    
                     self.playerView.player = self.player
-                    
                     self.player.replaceCurrentItem(with: AVPlayerItem(asset: asset))
-                    
                     self.videoScrubber.asset = asset
                 }
             }
@@ -227,7 +227,7 @@ class VideoViewController: UIViewController {
             }
         }
         
-        // Listen for changes in the playback
+        // Update the views as the video plays
         let interval = CMTime(value: 1, timescale: 30)
         timeObserverToken = player.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] time in
             guard let self = self else { return }

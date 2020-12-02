@@ -19,14 +19,6 @@ class VideoFrameCell: UICollectionViewCell {
         return imageView
     }()
     
-    // Debug label
-    var label: UILabel = {
-        let label = UILabel()
-        label.translatesAutoresizingMaskIntoConstraints = false
-        label.textColor = .white
-        return label
-    }()
-    
     override init(frame: CGRect) {
         super.init(frame: frame)
         setUpViews()
@@ -38,7 +30,6 @@ class VideoFrameCell: UICollectionViewCell {
     
     func setUpViews() {
         contentView.addSubview(imageView)
-        contentView.addSubview(label)
         
         NSLayoutConstraint.activate([
             // Image edge to edge
@@ -46,10 +37,6 @@ class VideoFrameCell: UICollectionViewCell {
             contentView.trailingAnchor.constraint(equalTo: imageView.trailingAnchor),
             contentView.topAnchor.constraint(equalTo: imageView.topAnchor),
             contentView.bottomAnchor.constraint(equalTo: imageView.bottomAnchor),
-            
-            // debug label centered
-            contentView.centerXAnchor.constraint(equalTo: label.centerXAnchor),
-            contentView.centerYAnchor.constraint(equalTo: label.centerYAnchor),
         ])
     }
     
@@ -61,6 +48,5 @@ class VideoFrameCell: UICollectionViewCell {
     
     private func reset() {
         imageView.image = nil
-        label.text = ""
     }
 }
