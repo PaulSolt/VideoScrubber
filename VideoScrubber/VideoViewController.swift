@@ -42,8 +42,52 @@ class VideoViewController: UIViewController {
         let videoScrubber = VideoScrubber()
         videoScrubber.translatesAutoresizingMaskIntoConstraints = false
         videoScrubber.backgroundColor = .yellow
+        videoScrubber.addTarget(self, action: #selector(didScrollVideoScrubber(sender:)), for: .valueChanged)
         return videoScrubber
     }()
+    
+    @objc func didScrollVideoScrubber(sender: VideoScrubber) {
+        let time = CMTime(seconds: Double(videoScrubber.value), preferredTimescale: 600)
+        stopPlayingAndSeekSmoothlyToTime(time: time)
+    }
+    
+    // Smooth seeking based on Apple Technical Note: https://developer.apple.com/library/archive/qa/qa1820/_index.html#//apple_ref/doc/uid/DTS40016828
+    // It will ignore seek requests if the player is still busy seeking
+    private var seekTime = CMTime.zero
+    private var isSeekInProgress = false
+    
+    func stopPlayingAndSeekSmoothlyToTime(time: CMTime) {
+        player.pause() // resume playback if it was playing when completed
+        
+        // Try to seek if there is not a seek in progress
+        if time != seekTime {
+            seekTime = time
+            if !isSeekInProgress {
+                tryToSeekToSeekTime()
+            }
+        }
+    }
+    
+    private func tryToSeekToSeekTime() {
+        guard let status = player.currentItem?.status else { return }
+        if status == .readyToPlay {
+            actuallySeekToSeekTime()
+        }
+    }
+    
+    private func actuallySeekToSeekTime() {
+        isSeekInProgress = true
+        let seekTimeInProgress = seekTime
+        player.seek(to: seekTime, toleranceBefore: .zero, toleranceAfter: .zero) { (isFinished) in
+            if seekTimeInProgress == self.seekTime {
+                self.isSeekInProgress = false
+            } else {
+                // If another seek request occured during our seek, seek to the most recent seek time
+                self.tryToSeekToSeekTime()
+            }
+        }
+    }
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -52,7 +96,6 @@ class VideoViewController: UIViewController {
         configureVideoScrubber()
         disableUI()
         
-//        let url = Bundle.main.url(forResource: "bad-video", withExtension: "mp4")!
         let url = Bundle.main.url(forResource: "BrewCoffeeVideo720", withExtension: "mp4")!
         loadVideo(url: url)
     }
@@ -80,10 +123,6 @@ class VideoViewController: UIViewController {
         ])
     }
     
-    
-    
-
-
     @IBAction func playPauseButtonPressed(_ sender: UIButton) {
         switch player.timeControlStatus {
         case .playing:
@@ -94,19 +133,18 @@ class VideoViewController: UIViewController {
             player.pause()
         }
     }
-    
+
     func loadVideo(url: URL) {
-        let asset = AVURLAsset(url: url)
+        let asset = AVURLAsset(url: url, options: [AVURLAssetPreferPreciseDurationAndTimingKey : true])
         loadPropertyValues(forAsset: asset)
     }
     
     // AVAsset may block the main thread until the asset is loaded as properties like isPlayable
     // block until the asset is buffered. An asset may not be playable if it has protected content
     func loadPropertyValues(forAsset asset: AVURLAsset) {
-        let assetKeysRequiredForPlayback = [ "playable", "hasProtectedContent" ]
+        let assetKeysRequiredForPlayback = [ "playable", "hasProtectedContent", "duration" ]
         
         asset.loadValuesAsynchronously(forKeys: assetKeysRequiredForPlayback) {
-            
             DispatchQueue.main.async {
                 if self.validateAssetValues(forKeys: assetKeysRequiredForPlayback, asset: asset) {
                     // Prepare for playback
@@ -135,7 +173,7 @@ class VideoViewController: UIViewController {
                 return false
             }
         }
-        
+
         if !asset.isPlayable || asset.hasProtectedContent {
             print("Error: the video is not playable or has protected content")
             let message = NSLocalizedString("The video is not playable or has protected content", comment: "You cannot play this video")
@@ -182,7 +220,7 @@ class VideoViewController: UIViewController {
         let timeElapsed = Float(time.seconds)
         
         // TODO: Update the slider UI for time
-        print("time: \(createTimeString(time: timeElapsed))")
+//        print("time: \(createTimeString(time: timeElapsed))")
     }
     
     private func createTimeString(time: Float) -> String {

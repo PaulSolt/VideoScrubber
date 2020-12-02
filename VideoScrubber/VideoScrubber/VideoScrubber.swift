@@ -13,7 +13,9 @@ struct Frame {
     let time: CMTime
 }
 
-class VideoScrubber: UIView {
+class VideoScrubber: UIControl {
+    
+    var value: Double = 0
     
     var asset: AVAsset? {
         didSet {
@@ -21,6 +23,7 @@ class VideoScrubber: UIView {
             loadDefaultImageForAsset(asset: asset)
             
             // TODO: calculate # frames and request first batch of frames
+            loadImages(asset: asset)
         }
     }
     
@@ -28,9 +31,10 @@ class VideoScrubber: UIView {
         
         let imageGenerator = AVAssetImageGenerator(asset: asset)
         imageGenerator.appliesPreferredTrackTransform = true
+        imageGenerator.maximumSize = calculateFrameSize()
+
         imageGenerator.generateCGImagesAsynchronously(forTimes: [NSValue(time: CMTime.zero)]) { (time, cgImage, _, result, error) in
-            guard let cgImage = try? imageGenerator.copyCGImage(at: .zero,
-                                                                actualTime: nil) else {
+            guard let cgImage = cgImage else {
                 // TODO: Failed to load default image (asset may be invalid, hide UI?)
                 return
             }
@@ -39,6 +43,59 @@ class VideoScrubber: UIView {
                 self.collectionView.reloadData()
             }
         }
+    }
+    let timeScale: CMTimeScale = 600
+    
+    let targetFrameDuration: CMTimeValue = 5
+    
+    
+    func frameIndexForTime(_ time: CMTime) -> Int {
+        return Int(time.value / Int64(time.timescale) / targetFrameDuration)
+    }
+    
+    func timeForIndex(_ index: Int) -> CMTime {
+        CMTime(value: CMTimeValue(index) * targetFrameDuration * CMTimeValue(timeScale), timescale: timeScale)
+    }
+    
+    
+    func loadImages(asset: AVAsset) {
+
+        let imageGenerator = AVAssetImageGenerator(asset: asset)
+        imageGenerator.appliesPreferredTrackTransform = true
+
+        var requestedFrameTimes = [NSValue]()
+        var next = CMTime(value: 0, timescale: timeScale)
+        let step = CMTime(value: targetFrameDuration * CMTimeValue(timeScale), timescale: timeScale)
+        print("duration: \(asset.duration)")
+        while next < asset.duration {
+            requestedFrameTimes.append(NSValue(time: next))
+            next = next + step
+        }
+            
+//        imageGenerator.maximumSize = calculateFrameSize()
+        var counter = 0
+        imageGenerator.generateCGImagesAsynchronously(forTimes: requestedFrameTimes) { (requestedTime, cgImage, _, result, error) in
+            counter += 1
+            guard let cgImage = cgImage else {
+                // TODO: failed to load more frames
+                return
+            }
+            // Use the requested time so we have a predictable lookup
+            let image = UIImage(cgImage: cgImage)
+            DispatchQueue.main.async {
+                let frame = Frame(image: image, time: requestedTime)
+                self.frames.append(frame)
+                // update the views after all the requested images are loaded
+                if counter == requestedFrameTimes.count {
+                    self.collectionView.reloadData()
+                }
+            }
+        }
+    }
+    
+    func calculateFrameSize(scale: CGFloat = UIScreen.main.scale) -> CGSize {
+        let size = calculateItemSize()
+        return CGSize(width: size.width * scale, height: size.height * scale)
     }
     
     var defaultImage: UIImage?
@@ -78,7 +135,7 @@ class VideoScrubber: UIView {
     lazy var timeLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        
+        label.textColor = .label
         label.font = .monospacedDigitSystemFont(ofSize: 12, weight: .regular)
         label.text = "00:00"
         return label
@@ -87,7 +144,7 @@ class VideoScrubber: UIView {
     lazy var timeLabelBackground: UIView = {
         let background = UIView()
         background.translatesAutoresizingMaskIntoConstraints = false
-        background.backgroundColor = .white
+        background.backgroundColor = .systemGray6
         background.alpha = 0.7
         background.layer.cornerCurve = .continuous
         background.layer.cornerRadius = 3
@@ -98,11 +155,6 @@ class VideoScrubber: UIView {
         super.init(frame: frame)
         
         setUpViews()
-    }
-    
-    override func didMoveToSuperview() {
-        super.didMoveToSuperview()
-        
     }
     
     override func layoutSubviews() {
@@ -158,8 +210,15 @@ class VideoScrubber: UIView {
 
 extension VideoScrubber: UICollectionViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-//        var offset: CGFloat = scrollView.contentOffset.x
+        let xOffset: CGFloat = scrollView.contentOffset.x + scrollView.contentInset.left
         // TODO: use the offset to send change events back to target/action
+        let width = scrollView.contentSize.width
+        
+        // Create a value between [0, 1]
+        
+        value = Double(min(max(xOffset / width, 0), width)) * (asset?.duration.seconds ?? 1.0)
+        // post value changed
+        sendActions(for: .valueChanged) 
 
     }
 
@@ -167,7 +226,7 @@ extension VideoScrubber: UICollectionViewDelegate {
 
 extension VideoScrubber: UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        5 // frames.count
+        frames.count // 5 // frames.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -175,7 +234,11 @@ extension VideoScrubber: UICollectionViewDataSource {
         
         cell.label.text = "\(indexPath.item)"
         
-        if let image = defaultImage {
+        let frame = frames[indexPath.item]
+        
+        if let image = frame.image {
+            cell.imageView.image = image
+        } else if let image = defaultImage {
             cell.imageView.image = image
         }
         return cell
