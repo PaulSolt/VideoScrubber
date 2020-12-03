@@ -137,7 +137,7 @@ class VideoViewController: UIViewController {
     // Smooth seeking based on Apple Technical Note: https://developer.apple.com/library/archive/qa/qa1820/_index.html#//apple_ref/doc/uid/DTS40016828
     // It will ignore seek requests if the player is still busy seeking
     func stopPlayingAndSeekSmoothlyToTime(time: CMTime) {
-        player.pause() // TODO: resume playback if it was playing when completed
+        player.pause()
         
         if time != requestedSeekTime {
             requestedSeekTime = time

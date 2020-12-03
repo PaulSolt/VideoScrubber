@@ -45,7 +45,6 @@ class VideoScrubber: UIControl {
             guard let asset = asset else { return }
             loadDefaultImageForAsset(asset: asset)
             
-            // TODO: calculate # frames and request first batch of frames
             loadImages(asset: asset)
         }
     }
@@ -224,6 +223,7 @@ class VideoScrubber: UIControl {
         collectionView.contentOffset = CGPoint(x: xOffset, y: 0)
     }
     
+    /// Moves the playhead and time display with the end range of the scrollview
     private func horizontallyBouncePlayhead(scrollView: UIScrollView) {
         let offset = scrollView.contentOffset.x + scrollView.contentInset.left
         let width = collectionView.contentSize.width

@@ -15,7 +15,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         guard let windowScene = (scene as? UIWindowScene) else { return }
         let window = UIWindow(windowScene: windowScene)
         
-        // Simulate launching a video with the video player
+        // Simulate launching view controller with the video
         
         let url = Bundle.main.url(forResource: "BrewCoffeeVideo720", withExtension: "mp4")! // portrait
 //        let url = Bundle.main.url(forResource: "tomato-polinating", withExtension: "mp4")! // vertical
