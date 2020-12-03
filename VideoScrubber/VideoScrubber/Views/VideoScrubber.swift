@@ -227,7 +227,6 @@ class VideoScrubber: UIControl {
     private func horizontallyBouncePlayhead(scrollView: UIScrollView) {
         let offset = scrollView.contentOffset.x + scrollView.contentInset.left
         let width = collectionView.contentSize.width
-        print("offset: \(offset) width: \(width)")
         if offset < 0 || offset > width {
             playheadCenterXConstraint.constant = offset
             timeDisplayCenterXConstraint.constant = offset
