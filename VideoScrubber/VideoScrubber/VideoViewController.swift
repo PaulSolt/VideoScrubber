@@ -79,7 +79,6 @@ class VideoViewController: UIViewController {
         configureToolBar()
         configureVideoScrubber()
         disableUI()
-        addTapHideGesture()
 
         loadVideo(url: url)
     }
@@ -110,28 +109,6 @@ class VideoViewController: UIViewController {
             view.trailingAnchor.constraint(equalTo: videoScrubber.trailingAnchor),
             view.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: videoScrubber.bottomAnchor),
         ])
-    }
-    
-    private func addTapHideGesture() {
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(toggleUI(tapGesture:)))
-        view.addGestureRecognizer(tapGesture)
-    }
-    
-    @objc private func toggleUI(tapGesture: UITapGestureRecognizer) {
-        if tapGesture.state == .ended {
-            let isHidden: Bool = !(navigationController?.toolbar.alpha == 0)
-            UIView.animate(withDuration: 0.3, delay: 0, usingSpringWithDamping: 1.0, initialSpringVelocity: 0.0, options: []) {
-                if isHidden {
-                    self.videoScrubber.alpha = 0
-                    self.navigationController?.toolbar.alpha = 0
-                    self.navigationController?.navigationBar.alpha = 0
-                } else {
-                    self.videoScrubber.alpha = 1
-                    self.navigationController?.toolbar.alpha = 1
-                    self.navigationController?.navigationBar.alpha = 1
-                }
-            }
-        }
     }
 
     // Smooth seeking based on Apple Technical Note: https://developer.apple.com/library/archive/qa/qa1820/_index.html#//apple_ref/doc/uid/DTS40016828
