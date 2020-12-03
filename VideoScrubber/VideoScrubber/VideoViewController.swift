@@ -145,6 +145,8 @@ class VideoViewController: UIViewController {
     }
     
     @IBAction func playPauseButtonPressed(_ sender: UIButton) {
+        videoScrubber.stopScrolling()
+        
         switch player.timeControlStatus {
         case .playing:
             player.pause()
@@ -190,8 +192,6 @@ class VideoViewController: UIViewController {
         for key in keys {
             var error: NSError?
             if asset.statusOfValue(forKey: key, error: &error) == .failed {
-                print("Error: The video failed to load the key: \(key)")
-                
                 let stringFormat = NSLocalizedString("The video failed to load the key \"%@\"", comment: "The asset cannot be loaded")
                 let message = String.localizedStringWithFormat(stringFormat, key)
                 handleErrorWithMessage(message, error: error)
@@ -200,7 +200,6 @@ class VideoViewController: UIViewController {
         }
 
         if !asset.isPlayable || asset.hasProtectedContent {
-            print("Error: the video is not playable or has protected content")
             let message = NSLocalizedString("The video is not playable or has protected content", comment: "You cannot play this video")
             handleErrorWithMessage(message)
             return false
@@ -282,10 +281,12 @@ class VideoViewController: UIViewController {
     
     func disableUI() {
         playPauseButton.isEnabled = false
+        videoScrubber.isHidden = true
     }
     
     func enableUI() {
         playPauseButton.isEnabled = true
+        videoScrubber.isHidden = false
     }
     
     func handleErrorWithMessage(_ message: String, error: Error? = nil) {

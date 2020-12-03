@@ -82,6 +82,13 @@ class VideoScrubber: UIControl {
         return display
     }()
     
+    lazy var playhead: UIImageView = {
+        let image = UIImage(named: "playhead")!
+        let imageView = UIImageView(image:image)
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        return imageView
+    }()
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         
@@ -105,15 +112,26 @@ class VideoScrubber: UIControl {
     override var intrinsicContentSize: CGSize {
         return calculateItemSize()
     }
+
+    func stopScrolling() {
+        collectionView.setContentOffset(collectionView.contentOffset, animated: false)
+    }
     
     private func calculateItemSize() -> CGSize {
         CGSize(width: height * aspectRatio, height: height)
     }
 
+    var playheadCenterXConstraint: NSLayoutConstraint!
+    var timeDisplayCenterXConstraint: NSLayoutConstraint!
+    
     private func setUpViews() {
         addSubview(collectionView)
         addSubview(timeDisplay)
+        addSubview(playhead)
         
+        playheadCenterXConstraint = centerXAnchor.constraint(equalTo: playhead.centerXAnchor)
+        timeDisplayCenterXConstraint = centerXAnchor.constraint(equalTo: timeDisplay.centerXAnchor)
+
         NSLayoutConstraint.activate([
             // Collection View spans width
             leadingAnchor.constraint(equalTo: collectionView.leadingAnchor),
@@ -122,8 +140,13 @@ class VideoScrubber: UIControl {
             bottomAnchor.constraint(equalTo: collectionView.bottomAnchor),
             
             // Label is centered above collection view
-            centerXAnchor.constraint(equalTo: timeDisplay.centerXAnchor),
+            timeDisplayCenterXConstraint,
             collectionView.topAnchor.constraint(equalTo: timeDisplay.bottomAnchor, constant: 8),
+            
+            // Playhead is centered on collection view scrub bar
+            playheadCenterXConstraint,
+            playhead.topAnchor.constraint(equalTo: collectionView.topAnchor),
+            playhead.bottomAnchor.constraint(equalTo: collectionView.bottomAnchor),
         ])
     }
     
@@ -200,6 +223,20 @@ class VideoScrubber: UIControl {
         let xOffset = Double(min(max(normalizedXOffset * width, 0), width)) - Double(collectionView.contentInset.left)
         collectionView.contentOffset = CGPoint(x: xOffset, y: 0)
     }
+    
+    private func horizontallyBouncePlayhead(scrollView: UIScrollView) {
+        let offset = scrollView.contentOffset.x + scrollView.contentInset.left
+        let width = collectionView.contentSize.width
+        print("offset: \(offset) width: \(width)")
+        if offset < 0 || offset > width {
+            playheadCenterXConstraint.constant = offset
+            timeDisplayCenterXConstraint.constant = offset
+        }
+        if offset > width {
+            playheadCenterXConstraint.constant = offset - width
+            timeDisplayCenterXConstraint.constant = offset - width
+        }
+    }
 }
 
 // MARK: - UICollectionViewDelegate
@@ -214,6 +251,7 @@ extension VideoScrubber: UICollectionViewDelegate {
             updateTimeLabel(time: _value)
             sendActions(for: .valueChanged)
         }
+        horizontallyBouncePlayhead(scrollView: scrollView)
     }
         
     func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
