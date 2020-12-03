@@ -1,11 +1,14 @@
 # VideoScrubber
-Video Scrubber
 
 The video scrubber allows you to seek through a video that is loaded locally.
 
+![](images/VideoScrubberHero.gif)
 
 Features:
+* Plays videos
 * Generates frames for video scrub bar asynchronously
+* Shows timestamp during playback
+* Smooth video scrubbing
 
 Extras
 * Playhead bounces on scroll past the video start/end
