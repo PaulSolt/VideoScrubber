@@ -12,6 +12,7 @@ Features:
 
 Extras
 * Playhead bounces on scroll past the video start/end
+* Supports dark mode
 
 
 Known Issues:
